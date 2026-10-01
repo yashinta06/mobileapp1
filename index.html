@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Expense Tracker</title>
+    <link rel="icon" href="data:,">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --income: #10b981;
+            --expense: #ef4444;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        header { text-align: center; margin-bottom: 30px; }
+        header h1 { color: var(--primary); font-size: 32px; margin-bottom: 8px; }
+        header p { color: var(--text-muted); font-size: 14px; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--primary);
+        }
+        .stat-card.green { border-left-color: var(--success); }
+        .stat-card.orange { border-left-color: var(--warning); }
+        .stat-card.red { border-left-color: var(--danger); }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .stat-value { font-size: 22px; font-weight: 700; color: var(--text-main); }
+        .stat-value.income { color: var(--success); }
+        .stat-value.expense { color: var(--danger); }
+
+        .form-container, .table-container {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-main);
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 9px 11px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-tambah {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            height: 38px;
+            font-size: 13px;
+        }
+        .btn-tambah:hover { background-color: var(--primary-dark); }
+
+        .btn-batal {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            height: 38px;
+            margin-left: 8px;
+            display: none;
+            font-size: 13px;
+        }
+
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            padding: 12px 15px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            border-bottom: 2px solid var(--border);
+            font-weight: 600;
+        }
+        td { padding: 14px 15px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        tr:hover td { background-color: #f8fafc; }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .badge-income { background-color: #d1fae5; color: #065f46; }
+        .badge-expense { background-color: #fee2e2; color: #991b1b; }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            font-style: italic;
+            padding: 30px !important;
+        }
+
+        .btn-edit, .btn-delete {
+            border: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 4px;
+            color: white;
+        }
+        .btn-edit { background-color: var(--warning); }
+        .btn-delete { background-color: var(--danger); }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr 1fr; }
+            header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Student Expense Tracker</h1>
+        <p>Kelola keuangan bulanan Anda dengan lebih cerdas dan terstruktur</p>
+    </header>
+
+    <!-- STATISTIK -->
+    <section class="stats-grid">
+        <div class="stat-card green">
+            <div class="stat-label">Total Pemasukan</div>
+            <div class="stat-value income" id="stat-pemasukan">Rp 0</div>
+        </div>
+        <div class="stat-card red">
+            <div class="stat-label">Pengeluaran Hari Ini</div>
+            <div class="stat-value expense" id="stat-hari-ini">Rp 0</div>
+        </div>
+        <div class="stat-card orange">
+            <div class="stat-label">Total Pengeluaran Bulan Ini</div>
+            <div class="stat-value" id="stat-bulan-ini">Rp 0</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-label">Sisa Anggaran (Rp 1.500.000)</div>
+            <div class="stat-value" id="stat-sisa">Rp 1.500.000</div>
+        </div>
+    </section>
+
+    <!-- FORM -->
+    <section class="form-container">
+        <form id="expense-form">
+            <input type="hidden" id="edit-id" value="">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="type">Tipe</label>
+                    <select id="type" required>
+                        <option value="Pengeluaran">Pengeluaran</option>
+                        <option value="Pemasukan">Pemasukan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="desc">Deskripsi</label>
+                    <input type="text" id="desc" placeholder="Cth: Uang saku" required>
+                </div>
+                <div class="form-group">
+                    <label for="amount">Nominal (Rp)</label>
+                    <input type="number" id="amount" placeholder="50000" required>
+                </div>
+                <div class="form-group">
+                    <label for="category">Kategori</label>
+                    <select id="category" required>
+                        <option value="">-- Pilih --</option>
+                        <option value="Uang Saku">Uang Saku</option>
+                        <option value="Makan">Makan</option>
+                        <option value="Transportasi">Transportasi</option>
+                        <option value="Belanja">Belanja</option>
+                        <option value="Hiburan">Hiburan</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="date">Tanggal</label>
+                    <input type="date" id="date" required>
+                </div>
+            </div>
+            <div style="margin-top: 15px;">
+                <button type="submit" class="btn-tambah" id="btn-submit">Tambah</button>
+                <button type="button" class="btn-batal" id="btn-cancel">Batal</button>
+            </div>
+        </form>
+    </section>
+
+    <!-- TABEL -->
+    <section class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Tipe</th>
+                    <th>Deskripsi</th>
+                    <th>Kategori</th>
+                    <th>Nominal</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="expense-list">
+                <tr>
+                    <td colspan="6" class="empty-state">Memuat data...</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <script type="module">
+       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    onSnapshot,
+    deleteDoc,
+    doc,
+    updateDoc,
+    serverTimestamp,
+    query,
+    orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+  apiKey: "AIzaSyB6EN1b52BFr2RNrf3iVE5QXehdnGaa670",
+  authDomain: "mobileapp-db239.firebaseapp.com",
+  projectId: "mobileapp-db239",
+  storageBucket: "mobileapp-db239.firebasestorage.app",
+  messagingSenderId: "431519182164",
+appId: "1:431519182164:web:17a4fa06b2b9a7b11246c1",
+  measurementId: "G-5SGE811TJ3"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const expensesCollection = collection(db, "expenses");
+
+        console.log("✅ Firebase berhasil dihubungkan!");
+
+        const formatRupiah = (angka) => "Rp " + angka.toLocaleString("id-ID");
+
+        const formatTanggal = (timestamp) => {
+            if (!timestamp) return "-";
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+        };
+
+        const form = document.getElementById("expense-form");
+        const editIdInput = document.getElementById("edit-id");
+        const btnSubmit = document.getElementById("btn-submit");
+        const btnCancel = document.getElementById("btn-cancel");
+        const expenseList = document.getElementById("expense-list");
+        const ANGGARAN_BULANAN = 1500000;
+
+        function updateStatistik(docs) {
+            const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
+            const todayStr = today.toDateString();
+            
+            let totalPemasukan = 0;
+            let totalPengeluaranHariIni = 0;
+            let totalPengeluaranBulanIni = 0;
+
+            docs.forEach(docSnap => {
+                const data = docSnap.data();
+                const date = data.tanggal?.toDate ? data.tanggal.toDate() : new Date(data.tanggal);
+                const nominal = parseInt(data.nominal) || 0;
+                const tipe = data.tipe || "Pengeluaran";
+
+                if (tipe === "Pemasukan") {
+                    totalPemasukan += nominal;
+                } else {
+                    if (date.toDateString() === todayStr) {
+                        totalPengeluaranHariIni += nominal;
+                    }
+                    if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+                        totalPengeluaranBulanIni += nominal;
+                    }
+                }
+            });
+
+            const sisa = ANGGARAN_BULANAN + totalPemasukan - totalPengeluaranBulanIni;
+
+            document.getElementById("stat-pemasukan").textContent = formatRupiah(totalPemasukan);
+            document.getElementById("stat-hari-ini").textContent = formatRupiah(totalPengeluaranHariIni);
+            document.getElementById("stat-bulan-ini").textContent = formatRupiah(totalPengeluaranBulanIni);
+            document.getElementById("stat-sisa").textContent = formatRupiah(sisa);
+        }
+
+        function renderTabel(docs) {
+            if (docs.length === 0) {
+                expenseList.innerHTML = `<tr><td colspan="6" class="empty-state">Belum ada data. Silakan tambahkan di atas.</td></tr>`;
+                updateStatistik(docs);
+                return;
+            }
+
+            let html = "";
+            docs.forEach(docSnap => {
+                const data = docSnap.data();
+                const tipe = data.tipe || "Pengeluaran";
+                const badgeClass = tipe === "Pemasukan" ? "badge-income" : "badge-expense";
+                
+                html += `<tr>
+                    <td>${formatTanggal(data.tanggal)}</td>
+                    <td><span class="badge ${badgeClass}">${tipe}</span></td>
+                    <td>${data.deskripsi}</td>
+                    <td>${data.kategori}</td>
+                    <td>${formatRupiah(data.nominal)}</td>
+                    <td>
+                        <button class="btn-edit" data-id="${docSnap.id}">Edit</button>
+                        <button class="btn-delete" data-id="${docSnap.id}">Hapus</button>
+                    </td>
+                </tr>`;
+            });
+            expenseList.innerHTML = html;
+            updateStatistik(docs);
+
+            document.querySelectorAll(".btn-edit").forEach(btn => {
+                btn.addEventListener("click", () => editExpense(btn.dataset.id, docs));
+            });
+            document.querySelectorAll(".btn-delete").forEach(btn => {
+                btn.addEventListener("click", () => deleteExpense(btn.dataset.id));
+            });
+        }
+
+        const q = query(expensesCollection, orderBy("tanggal", "desc"));
+        onSnapshot(q, (snapshot) => {
+            renderTabel(snapshot.docs);
+        }, (error) => {
+            console.error("Error:", error);
+            expenseList.innerHTML = `<tr><td colspan="6" class="empty-state">Gagal memuat data.</td></tr>`;
+        });
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const editId = editIdInput.value;
+            const tipe = document.getElementById("type").value;
+            const deskripsi = document.getElementById("desc").value;
+            const nominal = parseInt(document.getElementById("amount").value);
+            const kategori = document.getElementById("category").value;
+            const tanggalStr = document.getElementById("date").value;
+
+            if (!tanggalStr) { alert("Tanggal harus diisi!"); return; }
+            const tanggal = new Date(tanggalStr);
+
+            try {
+                if (editId) {
+                    await updateDoc(doc(db, "expenses", editId), { tipe, deskripsi, nominal, kategori, tanggal });
+                    alert("✅ Data berhasil diupdate!");
+                } else {
+                    await addDoc(expensesCollection, { tipe, deskripsi, nominal, kategori, tanggal, createdAt: serverTimestamp() });
+                    alert("✅ Data berhasil ditambahkan!");
+                }
+                resetForm();
+            } catch (error) {
+                console.error("Error:", error);
+                alert("❌ Gagal: " + error.message);
+            }
+        });
+
+        async function deleteExpense(id) {
+            if (!confirm("Yakin ingin menghapus data ini?")) return;
+            try {
+                await deleteDoc(doc(db, "expenses", id));
+                alert("🗑️ Data berhasil dihapus!");
+            } catch (error) {
+                alert("❌ Gagal: " + error.message);
+            }
+        }
+
+        function editExpense(id, docs) {
+            const docSnap = docs.find(d => d.id === id);
+            if (!docSnap) return;
+            const data = docSnap.data();
+            document.getElementById("type").value = data.tipe || "Pengeluaran";
+            document.getElementById("desc").value = data.deskripsi;
+            document.getElementById("amount").value = data.nominal;
+            document.getElementById("category").value = data.kategori;
+            const date = data.tanggal?.toDate ? data.tanggal.toDate() : new Date(data.tanggal);
+            document.getElementById("date").value = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+            editIdInput.value = id;
+            btnSubmit.textContent = "Update";
+            btnCancel.style.display = "inline-block";
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        btnCancel.addEventListener("click", resetForm);
+
+        function resetForm() {
+            form.reset();
+            editIdInput.value = "";
+            btnSubmit.textContent = "Tambah";
+            btnCancel.style.display = "none";
+            const today = new Date();
+            document.getElementById("date").value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+        }
+
+        const today = new Date();
+        document.getElementById("date").value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+    </script>
+
+</body>
+</html>
